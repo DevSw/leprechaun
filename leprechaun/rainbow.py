@@ -2,6 +2,7 @@
 
 import sqlite3
 
+import logging
 from .db import create_table, save_pair
 
 def _hash_wordlist(wordlist, hashing_algorithm):
@@ -37,6 +38,8 @@ def create_rainbow_table(
     - db: Flag whether the output is an SQLite DB or not (default=False).
 
   """
+
+  log = logging.getLogger("leprechaun.rainbow")
   # Create the database, if necessary.
   if use_database:
     db_file = output + ".db"
@@ -57,4 +60,5 @@ def create_rainbow_table(
           txt_file.write(entry)
       txt_file.close()
   except IOError as err:
+    log.error("File yar error: %s", str(err))
     print("File error: " + str(err))

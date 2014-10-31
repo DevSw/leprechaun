@@ -3,6 +3,7 @@
 import argparse
 import glob
 import hashlib
+import logging
 import os
 import sys
 
@@ -11,6 +12,12 @@ from .rainbow import create_rainbow_table
 
 def main():
   """Main function."""
+
+  global log, debug
+
+  log = logging.getLogger("leprechaun")
+  log.setLevel(logging.INFO)
+
   # Create the command line arguments.
   parser = argparse.ArgumentParser(prog="leprechaun")
   parser.add_argument("wordlist", type=str, metavar="WORDLIST",
@@ -43,14 +50,23 @@ def main():
   group_hashing.add_argument("-s5", "--sha512", action="store_true",
     help="Generate SHA512 hashes of given passwords")
 
+  group_logging = parser.add_argument_group("logging argumnets")
+  group_logging.add_argument("--debug",action="store_true",help="Print out debug statements")
+
   # Parse the command line arguments.
   args = parser.parse_args()
+
+  if args.debug:
+    debug = True
+    log.setLevel(logging.DEBUG)
+
+  setupLogging()
 
   # Generate a wordlist for the user if they request one.
   if args.generate_wordlist:
     output_file_name = os.path.abspath(args.wordlist + ".txt")
     create_wordlist(output_file_name, args.word_length)
-    print("Wordlist has been generated.")
+    log.info("Wordlist has been generated.")
 
     # We just want to generate a wordlist, so exit the program when that's done.
     # Maybe in the future we'll hash the wordlist, but for now I don't really
@@ -67,6 +83,7 @@ def main():
     hashing_algorithm = hashlib.sha512()
   else:
     hashing_algorithm = hashlib.md5()
+
 
   # If the user provided their own name for the rainbow table, then use that.
   # Otherwise, use "rainbow".
@@ -94,7 +111,17 @@ def main():
     else:
       create_rainbow_table(args.wordlist, hashing_algorithm, output)
 
-  print("Rainbow table has been generated.")
+  log.info("Rainbow table has been generated.")
+
+def setupLogging():
+  formatter = logging.Formatter("%(message)s")
+  ch = logging.StreamHandler(sys.stdout)
+  ch.setFormatter(formatter)
+  if debug:
+    ch.setLevel(logging.DEBUG)
+  else:
+    ch.setLevel(logging.INFO)
+  log.addHandler(ch)
   
 if __name__ == "__main__":
   main()
