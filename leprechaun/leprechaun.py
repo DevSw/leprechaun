@@ -84,7 +84,6 @@ def main():
   else:
     hashing_algorithm = hashlib.md5()
 
-
   # If the user provided their own name for the rainbow table, then use that.
   # Otherwise, use "rainbow".
   if not args.output:

@@ -45,9 +45,11 @@ def create_rainbow_table(
     db_file = output + ".db"
     db_connection = sqlite3.connect(db_file)
     create_table(db_connection)
+    log.debug("Database %s created",db_file)
   else:
     # Otherwise, create the plaintext file.
     txt_file = open(output + ".txt", "a")
+    log.debug("Output file %s openend",output+".txt")
 
   # Now actually hash the words in the wordlist.
   try:
@@ -60,5 +62,4 @@ def create_rainbow_table(
           txt_file.write(entry)
       txt_file.close()
   except IOError as err:
-    log.error("File yar error: %s", str(err))
-    print("File error: " + str(err))
+    log.error("File error: %s", str(err))

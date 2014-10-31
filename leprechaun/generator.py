@@ -56,5 +56,4 @@ def create_wordlist(file_name, word_limit=8, digit_limit=0):
           word = word + digit
           print(word, file=output)
   except IOError as err:
-    log.error("File yar error: %s",str(err))
-    #print("File error: " + str(err))
+    log.error("File error: %s",str(err))
