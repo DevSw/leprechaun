@@ -59,6 +59,10 @@ def main():
   if args.debug:
     debug = True
     log.setLevel(logging.DEBUG)
+    log.info("Debug mode enabled")
+  else:
+    debug = False
+    log.info("Debug not enabled")
 
   setupLogging()
 
@@ -97,6 +101,8 @@ def main():
     # list of the names of the files.
     for wordlist in sorted(glob.glob(os.path.abspath(args.wordlist +
       "/*.txt"))):
+
+      log.debug("Number of lines %d",file_len(wordlist))
       if args.use_database: # Save the rainbow table as an SQLite DB.
         create_rainbow_table(wordlist, hashing_algorithm, output,
           use_database=True)
@@ -116,10 +122,7 @@ def setupLogging():
   formatter = logging.Formatter("%(message)s")
   ch = logging.StreamHandler(sys.stdout)
   ch.setFormatter(formatter)
-  if debug:
-    ch.setLevel(logging.DEBUG)
-  else:
-    ch.setLevel(logging.INFO)
+  ch.setLevel(logging.DEBUG)
   log.addHandler(ch)
   
 if __name__ == "__main__":
