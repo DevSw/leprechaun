@@ -4,8 +4,8 @@ import sqlite3
 
 import logging
 import hashlib
-from .db import create_table, save_pair
-from .multicore import cpuCount, start_rainbow_cores
+from .db import create_table, save_pair, create_database
+from .multicore import cpuCount, start_multicore
 
 log = logging.getLogger("leprechaun.rainbow")
 
@@ -31,6 +31,33 @@ def _hash_wordlist(wordlist, hashing_algorithm):
     return_string = hashing_obj.hexdigest() + ":" + word
     yield return_string
 
+def write_output(output,input_,use_database):
+
+  if use_database:
+    entries = input_.split(":")
+    save_pair(output, entries[0], entries[1])
+  else:
+    output.write(input_)
+
+def create_output_stream(output,use_database):
+
+    # Create the database, if necessary.
+    if use_database:
+      output_stream = create_database(output)
+    else:
+      # Otherwise, create the plaintext file.
+      output_stream = open(output + ".txt", "a")
+      log.debug("Output file %s openend",output+".txt")
+
+    return output_stream
+
+def close_output_stream(output,use_database):
+
+  if not use_database:
+    output.flush()
+
+  output.close()
+
 def create_rainbow_table(
   wordlist, hashing_algorithm, output, use_database=False):
   """Creates the rainbow table from the given plaintext wordlist.
@@ -44,34 +71,25 @@ def create_rainbow_table(
   """
 
   num_cores = cpuCount()
+
   if num_cores > 1:
     log.debug("Using multicore, %d cores",num_cores)
-    start_rainbow_cores(wordlist,hashing_algorithm,output,use_database)
+    start_multicore(wordlist,hashing_algorithm,output,use_database)
 
   else:
     log.debug("Using single core")
 
-    # Create the database, if necessary.
-    if use_database:
-        db_file = output + ".db"
-        db_connection = sqlite3.connect(db_file)
-        create_table(db_connection)
-        log.debug("Database %s created",db_file)
-    else:
-      # Otherwise, create the plaintext file.
-      txt_file = open(output + ".txt", "a")
-      log.debug("Output file %s openend",output+".txt")
+    output_stream = create_output_stream(output,use_database)
 
     # Now actually hash the words in the wordlist.
     try:
       #with open(wordlist, "r", encoding="utf-8") as wl:
       with open(wordlist, "r", encoding='latin-1') as wl:
-      for entry in _hash_wordlist(wl, hashing_algorithm):
-        if use_database:
-          entries = entry.split(":")
-          save_pair(db_connection, entries[0], entries[1])
-        else:
-          txt_file.write(entry)
-        txt_file.close()
+
+        # Now actually hash the words in the wordlist.
+        for entry in _hash_wordlist(wl, hashing_algorithm):
+          write_output(output_stream, entry, use_database)
+
+      close_output_stream(output_stream,use_database)
     except IOError as err:
       log.error("File error: %s", str(err))

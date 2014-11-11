@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from multiprocessing import Process, Queue, cpu_count,Pool,JoinableQueue
+from multiprocessing import Process, cpu_count, JoinableQueue
 from itertools import islice
 from operator import truediv
 import logging
@@ -47,7 +47,7 @@ def file_len(fname):
   log.debug("%s, has %d lines",fname,result)
   return result
 
-def start_rainbow_cores(wordlist,hashing_algorithm,output,use_database):
+def start_multicore(wordlist,hashing_algorithm,output,use_database):
   """Start the multicore process.
 
   This devides words that needs to be hashed between cores
@@ -63,24 +63,29 @@ def start_rainbow_cores(wordlist,hashing_algorithm,output,use_database):
   chunk_size = 25000
   core_list = list()
   num_cores = cpuCount()
+  num_hash_cores = num_cores -1
   result_queue = JoinableQueue()
-  work_queue = JoinableQueue(num_cores)
+  work_queue = JoinableQueue(num_hash_cores)
 
-  for core in range(num_cores-1):
+  # Start hash cores
+  for core in range(num_hash_cores):
 
-    cur_core = Process(target=core_run,args=(core,result_queue,work_queue,hashing_algorithm))
+    cur_core = Process(target=hash_core_run,args=(core,result_queue,work_queue,hashing_algorithm))
     cur_core.start()
     core_list.append(cur_core)
 
-  out_core = Process(target=output_run,args=(result_queue,output,use_database))
+  # Start output core
+  out_core = Process(target=output_core_run,args=(result_queue,output,use_database))
   out_core.start()
-  log.debug("Output core started")
 
   with open(wordlist,encoding="latin-1") as fwordlist:
 
     result_lines = list()
+
     for index,line in enumerate(fwordlist):
       result_lines.append(line)
+
+      # Divides number of lines between hashcores
       if (index % chunk_size) == 0:
         work_queue.put(result_lines)
         result_lines = list()
@@ -88,40 +93,63 @@ def start_rainbow_cores(wordlist,hashing_algorithm,output,use_database):
     if len(result_lines) > 0:
       work_queue.put(result_lines)
 
-  work_queue.join()
+  # Send stop signal to hash cores
+  for i in range(num_hash_cores):
+    work_queue.put(None)
+
+  # Wait for hashing cores to finish
+  for hash_core in core_list:
+    hash_core.join()
+
+  # Send stop signal to output core to finish
+  # and then wait for it
+  result_queue.put(None)
+  out_core.join()
+
+  # Close Joinable queues
   work_queue.close()
-
-  result_queue.join()
   result_queue.close()
-  log.debug("Result queue is finished")
 
-  out_core.terminate()
-  for core in core_list:
-    core.terminate()
+def output_core_run(result_queue,output,use_database):
 
-def output_run(result_queue,output,use_database):
-
-  from .rainbow import save_rainbow_values
+  from .rainbow import _hash_wordlist, create_rainbow_table, close_output_stream,write_output,create_output_stream
 
   core_log = logging.getLogger("leprechaun.core.output")
+  core_log.debug("Output core started")
 
-  with open(output+".txt","a") as out:
-    core_log.debug("Output file opened %s",output+".txt")
-    while True:
-      result_list = result_queue.get()
-      for result in result_list:
-        out.write(result)
+  output_stream = create_output_stream(output, use_database)
+  while True:
+    result_list = result_queue.get()
+
+    if result_list is None:
       result_queue.task_done()
+      break
 
-def core_run(core,result_queue,work_queue,hashing_algorithm):
+    for result in result_list:
+      write_output(output_stream,result,use_database)
 
-  from .rainbow import _hash_wordlist
+    result_queue.task_done()
 
-  core_log = logging.getLogger("leprechaun.core")
+  close_output_stream(output_stream,use_database)
+  core_log.debug("Output core exited")
+
+def hash_core_run(core,result_queue,work_queue,hashing_algorithm):
+
+  from .rainbow import _hash_wordlist, create_rainbow_table, close_output_stream,write_output
+
+  core_log = logging.getLogger("leprechaun.core.hash")
+  core_log.debug("Hash-Core[%d] started",core)
+
   while True:
     work_list = work_queue.get()
     result_list = list()
+
+    if work_list is None:
+      work_queue.task_done()
+      break
+
     for result in _hash_wordlist(work_list,hashing_algorithm):
         result_list.append(result)
     result_queue.put(result_list)
     work_queue.task_done()
+  core_log.debug("Hash-Core[%d] is stopped",core)

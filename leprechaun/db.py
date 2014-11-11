@@ -1,6 +1,17 @@
 #!/usr/bin/env python3
 
 import sqlite3
+import logging
+
+log = logging.getLogger("leprechaun.db")
+
+def create_database(output):
+
+  db_file = output + ".db"
+  db_connection = sqlite3.connect(db_file)
+  create_table(db_connection)
+  log.debug("Database created %s",db_file)
+  return db_connection
 
 def create_table(connection):
   """Creates a new table in the database.
