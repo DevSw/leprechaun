@@ -32,6 +32,13 @@ def _hash_wordlist(wordlist, hashing_algorithm):
     yield return_string
 
 def write_output(output,input_,use_database):
+  """ Write output to the output stream
+  Writes the result to the sqlite3 database or textfile
+
+  Paramters:
+    - output: output stream which to write result to
+    - use_database: if the output_stream is a database connection
+  """
 
   if use_database:
     entries = input_.split(":")
@@ -40,6 +47,14 @@ def write_output(output,input_,use_database):
     output.write(input_)
 
 def create_output_stream(output,use_database):
+  """ Create output stream
+  If use_database is true, a sqlite3 database connection will be 
+  created, otherwise a file descriptor will be opened.
+
+  Parameters:
+    - output: filename of the output stream
+    - use_database: if output stream is a database connection or not
+  """
 
     # Create the database, if necessary.
     if use_database:
@@ -52,6 +67,12 @@ def create_output_stream(output,use_database):
     return output_stream
 
 def close_output_stream(output,use_database):
+  """ Close output stream
+
+  Parameters:
+    - output: output stream that should be closed
+    - use_database: if output stream is a database connection or not
+  """
 
   if not use_database:
     output.flush()

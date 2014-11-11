@@ -13,7 +13,6 @@ def cpuCount():
 
   Returns:
     - Number of available cores
-
   """
 
   result = 1
@@ -62,8 +61,11 @@ def start_multicore(wordlist,hashing_algorithm,output,use_database):
   global core_list
   chunk_size = 25000
   core_list = list()
+
+  # Save 1 core for writing
   num_cores = cpuCount()
   num_hash_cores = num_cores -1
+
   result_queue = JoinableQueue()
   work_queue = JoinableQueue(num_hash_cores)
 
@@ -111,20 +113,34 @@ def start_multicore(wordlist,hashing_algorithm,output,use_database):
   result_queue.close()
 
 def output_core_run(result_queue,output,use_database):
+  """Output process
+
+  This process receives all generated hash values and writes it to the 
+  appropiate output stream
+
+  Parameters:
+    - result_queue: queue containing the hash results
+    - output: the output file format
+    - use_database: if results should be stored in a database
+  """
 
   from .rainbow import _hash_wordlist, create_rainbow_table, close_output_stream,write_output,create_output_stream
 
   core_log = logging.getLogger("leprechaun.core.output")
   core_log.debug("Output core started")
 
+  # Open output stream
   output_stream = create_output_stream(output, use_database)
+
   while True:
     result_list = result_queue.get()
 
+    # If result_list is None than al words are hashed so close the output stream
     if result_list is None:
       result_queue.task_done()
       break
 
+    # store everything from the result list
     for result in result_list:
       write_output(output_stream,result,use_database)
 
@@ -134,6 +150,17 @@ def output_core_run(result_queue,output,use_database):
   core_log.debug("Output core exited")
 
 def hash_core_run(core,result_queue,work_queue,hashing_algorithm):
+  """Hash process
+
+  This hash process will receive words from the work_queue and calculates
+  them into hashes.
+
+  Parameters:
+    - core: identification of the process
+    - result_queue: this queue will contain all the generated results that needs to be written
+    - work_queue: containing words which needs to be hashed
+    - hashing_algorithm: the hashing algorithm that should be used
+  """
 
   from .rainbow import _hash_wordlist, create_rainbow_table, close_output_stream,write_output
 
@@ -144,12 +171,16 @@ def hash_core_run(core,result_queue,work_queue,hashing_algorithm):
     work_list = work_queue.get()
     result_list = list()
 
+    # if work_list is None that means input is empty, so finish
     if work_list is None:
       work_queue.task_done()
       break
 
+    # hash the wordlist and store it in result queue
     for result in _hash_wordlist(work_list,hashing_algorithm):
         result_list.append(result)
+
     result_queue.put(result_list)
     work_queue.task_done()
+
   core_log.debug("Hash-Core[%d] is stopped",core)
