@@ -26,20 +26,41 @@ def cpuCount():
     except:
       log.error("Cannot get number of cores, default to 1")
 
-  log.debug("Num of cores %d", result)
   return result
 
 def file_len(fname):
+  """Count the number of lines in file
+
+  Parameters:
+    - fname: file to read number of lines from
+
+  Returns:
+    - Number of lines in file
+  """
   with open(fname,encoding="latin-1") as f:
     for i, l in enumerate(f):
       pass
-  log.debug("%s, has %d lines",fname,i+1)
-  return i + 1
 
-def start_rainbow_cores(queue,wordlist,hashing_algorithm,output,use_database):
+  # Last line is not counted, so add it
+  result = i + 1
+
+  log.debug("%s, has %d lines",fname,result)
+  return result
+
+def start_rainbow_cores(wordlist,hashing_algorithm,output,use_database):
+  """Start the multicore process.
+
+  This devides words that needs to be hashed between cores
+
+  Parameters:
+    - wordlist: list containing words that need to be hashed
+    - hashing_algorithm: which hashing algorithm should be used
+    - output: format of the output file
+    - use_database: if results should be stored in a database
+  """
 
   global core_list
-  chunk_size = 10000
+  chunk_size = 25000
   core_list = list()
   num_cores = cpuCount()
   result_queue = JoinableQueue()
@@ -94,29 +115,13 @@ def output_run(result_queue,output,use_database):
 
 def core_run(core,result_queue,work_queue,hashing_algorithm):
 
-  from .rainbow import hash_wordlist
+  from .rainbow import _hash_wordlist
 
   core_log = logging.getLogger("leprechaun.core")
   while True:
     work_list = work_queue.get()
-    result_list = hash_wordlist(work_list,hashing_algorithm)
+    result_list = list()
+    for result in _hash_wordlist(work_list,hashing_algorithm):
+        result_list.append(result)
     result_queue.put(result_list)
     work_queue.task_done()
-
-def core_run_2(queue,core,wordlist,hashing_algorithm,start,end):
-
-  from .rainbow import hash_wordlist
-
-  start = int(start)
-  end = int(end)
-
-  core_log = logging.getLogger("leprechaun.core")
-  core_log.debug("Core (%d), index: %d, end: %d, started",core,start,end)
-
-  with open(wordlist,encoding="latin-1") as fwordlist:
-    result_list = hash_wordlist(islice(fwordlist,start,end,1),hashing_algorithm)
-
-  fwordlist.close()
-  queue.put(result_list)
-  core_log.debug("Core (%d) finished, result %d",core,len(result_list))
-  sys.exit(0)
