@@ -57,14 +57,14 @@ def create_output_stream(output,use_database):
   """
 
     # Create the database, if necessary.
-    if use_database:
-      output_stream = create_database(output)
-    else:
-      # Otherwise, create the plaintext file.
-      output_stream = open(output + ".txt", "a")
-      log.debug("Output file %s openend",output+".txt")
+  if use_database:
+    output_stream = create_database(output)
+  else:
+    # Otherwise, create the plaintext file.
+    output_stream = open(output + ".txt", "a")
+    log.debug("Output file %s openend",output+".txt")
 
-    return output_stream
+  return output_stream
 
 def close_output_stream(output,use_database):
   """ Close output stream

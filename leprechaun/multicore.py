@@ -46,7 +46,7 @@ def file_len(fname):
   log.debug("%s, has %d lines",fname,result)
   return result
 
-def start_multicore(wordlist,hashing_algorithm,output,use_database):
+def start_multicore(wordlists,hashing_algorithm,output,use_database):
   """Start the multicore process.
 
   This devides words that needs to be hashed between cores
@@ -80,20 +80,20 @@ def start_multicore(wordlist,hashing_algorithm,output,use_database):
   out_core = Process(target=output_core_run,args=(result_queue,output,use_database))
   out_core.start()
 
-  with open(wordlist,encoding="latin-1") as fwordlist:
+  result_lines = []
+  for wordlist in wordlists:
+    with open(wordlist,encoding="latin-1") as fwordlist:
 
-    result_lines = list()
+      for index,line in enumerate(fwordlist):
+        result_lines.append(line)
 
-    for index,line in enumerate(fwordlist):
-      result_lines.append(line)
+        # Divides number of lines between hashcores
+        if (index % chunk_size) == 0:
+          work_queue.put(result_lines)
+          result_lines = []
 
-      # Divides number of lines between hashcores
-      if (index % chunk_size) == 0:
-        work_queue.put(result_lines)
-        result_lines = list()
-
-    if len(result_lines) > 0:
-      work_queue.put(result_lines)
+  if len(result_lines) > 0:
+    work_queue.put(result_lines)
 
   # Send stop signal to hash cores
   for i in range(num_hash_cores):
