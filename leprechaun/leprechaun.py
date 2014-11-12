@@ -51,6 +51,8 @@ def main():
     help="Generate SHA1 hashes of given passwords")
   group_hashing.add_argument("-s2", "--sha256", action="store_true",
     help="Generate SHA256 hashes of given passwords")
+  group_hashing.add_argument("-s3", "--sha384", action="store_true",
+    help="Generate SHA384 hashes of given passwords")
   group_hashing.add_argument("-s5", "--sha512", action="store_true",
     help="Generate SHA512 hashes of given passwords")
 
@@ -67,7 +69,7 @@ def main():
 
   setupLogging()
 
-  log.info("Rainbow started, %s",start_time.strftime("%H:%M:%S"))
+  log.info("Leprechaun started, %s",start_time.strftime("%H:%M:%S"))
 
   # Generate a wordlist for the user if they request one.
   if args.generate_wordlist:
@@ -83,6 +85,8 @@ def main():
         hashing_algorithm = hashlib.sha1()
     elif args.sha256:
         hashing_algorithm = hashlib.sha256()
+    elif args.sha384:
+        hashing_algorithm = hashlib.sha384()
     elif args.sha512:
         hashing_algorithm = hashlib.sha512()
     else:

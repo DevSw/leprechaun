@@ -16,6 +16,7 @@ def cpuCount():
   """
 
   result = 1
+  return result
   try:
     result = cpu_count()
   except NotImplementedError:
@@ -127,7 +128,7 @@ def output_core_run(result_queue,output,use_database):
   from .rainbow import _hash_wordlist, create_rainbow_table, close_output_stream,write_output,create_output_stream
 
   core_log = logging.getLogger("leprechaun.core.output")
-  core_log.debug("Output core started")
+  core_log.debug("Output-core started")
 
   # Open output stream
   output_stream = create_output_stream(output, use_database)
@@ -183,4 +184,4 @@ def hash_core_run(core,result_queue,work_queue,hashing_algorithm):
     result_queue.put(result_list)
     work_queue.task_done()
 
-  core_log.debug("Hash-Core[%d] is stopped",core)
+  core_log.debug("Hash-Core[%d] exited",core)

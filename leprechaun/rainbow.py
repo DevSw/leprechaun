@@ -109,6 +109,6 @@ def create_rainbow_table(
           for entry in _hash_wordlist(wl, hashing_algorithm):
             write_output(output_stream, entry, use_database)
 
-        close_output_stream(output_stream,use_database)
+      close_output_stream(output_stream,use_database)
     except IOError as err:
       log.error("File error: %s", str(err))
