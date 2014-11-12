@@ -28,7 +28,7 @@ def _hash_wordlist(wordlist, hashing_algorithm):
     yield return_string
 
 def create_rainbow_table(
-  wordlist, hashing_algorithm, output, use_database=False):
+  wordlists, hashing_algorithm, output, use_database=False):
   """Creates the rainbow table from the given plaintext wordlist.
 
   Parameters:
@@ -53,13 +53,15 @@ def create_rainbow_table(
 
   # Now actually hash the words in the wordlist.
   try:
-    with open(wordlist, "r", encoding="utf-8") as wl:
-      for entry in _hash_wordlist(wl, hashing_algorithm):
-        if use_database:
-          entries = entry.split(":")
-          save_pair(db_connection, entries[0], entries[1])
-        else:
-          txt_file.write(entry)
-      txt_file.close()
+   # with open(wordlist, "r", encoding="utf-8") as wl:
+    for wordlist in wordlists:
+      with open(wordlist, "r", encoding="latin-1") as wl:
+        for entry in _hash_wordlist(wl, hashing_algorithm):
+          if use_database:
+            entries = entry.split(":")
+            save_pair(db_connection, entries[0], entries[1])
+          else:
+            txt_file.write(entry)
+        txt_file.close()
   except IOError as err:
     log.error("File error: %s", str(err))
