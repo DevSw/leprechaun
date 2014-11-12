@@ -27,6 +27,54 @@ def _hash_wordlist(wordlist, hashing_algorithm):
     return_string = hashing_obj.hexdigest() + ":" + word
     yield return_string
 
+def write_output(output,input_,use_database):
+  """ Write output to the output stream
+  Writes the result to the sqlite3 database or textfile
+
+  Paramters:
+    - output: output stream which to write result to
+    - use_database: if the output_stream is a database connection
+  """
+
+  if use_database:
+    entries = input_.split(":")
+    save_pair(output, entries[0], entries[1])
+  else:
+    output.write(input_)
+
+def create_output_stream(output,use_database):
+  """ Create output stream
+  If use_database is true, a sqlite3 database connection will be 
+  created, otherwise a file descriptor will be opened.
+
+  Parameters:
+    - output: filename of the output stream
+    - use_database: if output stream is a database connection or not
+  """
+
+    # Create the database, if necessary.
+  if use_database:
+    output_stream = create_database(output)
+  else:
+    # Otherwise, create the plaintext file.
+    output_stream = open(output + ".txt", "a")
+    log.debug("Output file %s openend",output+".txt")
+
+  return output_stream
+
+def close_output_stream(output,use_database):
+  """ Close output stream
+
+  Parameters:
+    - output: output stream that should be closed
+    - use_database: if output stream is a database connection or not
+  """
+
+  if not use_database:
+    output.flush()
+
+  output.close()
+
 def create_rainbow_table(
   wordlists, hashing_algorithm, output, use_database=False):
   """Creates the rainbow table from the given plaintext wordlist.
@@ -39,17 +87,14 @@ def create_rainbow_table(
 
   """
 
-  log = logging.getLogger("leprechaun.rainbow")
-  # Create the database, if necessary.
-  if use_database:
-    db_file = output + ".db"
-    db_connection = sqlite3.connect(db_file)
-    create_table(db_connection)
-    log.debug("Database %s created",db_file)
+  num_cores = cpuCount()
+
+  if num_cores > 1:
+    log.debug("Using multicore, %d cores",num_cores)
+    start_multicore(wordlist,hashing_algorithm,output,use_database)
+
   else:
-    # Otherwise, create the plaintext file.
-    txt_file = open(output + ".txt", "a")
-    log.debug("Output file %s openend",output+".txt")
+    log.debug("Using single core")
 
   # Now actually hash the words in the wordlist.
   try:
@@ -57,11 +102,8 @@ def create_rainbow_table(
     for wordlist in wordlists:
       with open(wordlist, "r", encoding="latin-1") as wl:
         for entry in _hash_wordlist(wl, hashing_algorithm):
-          if use_database:
-            entries = entry.split(":")
-            save_pair(db_connection, entries[0], entries[1])
-          else:
-            txt_file.write(entry)
-        txt_file.close()
-  except IOError as err:
-    log.error("File error: %s", str(err))
+          write_output(output_stream, entry, use_database)
+
+      close_output_stream(output_stream,use_database)
+    except IOError as err:
+      log.error("File error: %s", str(err))
