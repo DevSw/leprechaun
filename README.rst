@@ -27,7 +27,7 @@ everything else! ::
 *****
 Usage
 *****
-``leprechaun [-h] [-g] [-l LENGTH] [-d] [-o OUTPUT] [-m] [-s] [-s2] [-s5] WORDLIST``
+``leprechaun [-h] [-g] [-l LENGTH] [-d] [-o OUTPUT] [--debug] [-m] [-s] [-s2] [-s3] [-s5] WORDLIST``
     
 **arguments:** ::
 
@@ -55,11 +55,14 @@ Usage
                                       the file extension (default=rainbow)
     -d, --use-database                Save the output to an SQLite DB instead
                                       of a plaintext file
+    (Logging Arguments)
+    --debug                           Print debug log messages
 
     (Hashing Arguments)
     -m, --md5                         Generate MD5 hashes of given passwords (default)
     -s, --sha1                        Generate SHA1 hashes of given passwords    
     -s2, --sha256                     Generate SHA256 hashes of given passwords    
+    -s3, --sha384                     Generate SHA384 hashes of given passwords    
     -s5, --sha512                     Generate SHA512 hashes of given passwords
 
 ********

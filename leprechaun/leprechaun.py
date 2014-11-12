@@ -56,7 +56,7 @@ def main():
   group_hashing.add_argument("-s5", "--sha512", action="store_true",
     help="Generate SHA512 hashes of given passwords")
 
-  group_logging = parser.add_argument_group("logging argumnets")
+  group_logging = parser.add_argument_group("logging arguments")
   group_logging.add_argument("--debug",action="store_true",help="Print out debug statements")
 
   # Parse the command line arguments.
