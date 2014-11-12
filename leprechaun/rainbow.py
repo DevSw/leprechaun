@@ -105,7 +105,7 @@ def create_rainbow_table(
     try:
     # with open(wordlist, "r", encoding="utf-8") as wl:
       for wordlist in wordlists:
-        with open(wordlist, "r", encoding="latin-1") as wl:
+        with open(wordlist, "r", encoding="utf-8") as wl:
           for entry in _hash_wordlist(wl, hashing_algorithm):
             write_output(output_stream, entry, use_database)
 

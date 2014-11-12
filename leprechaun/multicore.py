@@ -16,7 +16,6 @@ def cpuCount():
   """
 
   result = 1
-  return result
   try:
     result = cpu_count()
   except NotImplementedError:
@@ -37,7 +36,7 @@ def file_len(fname):
   Returns:
     - Number of lines in file
   """
-  with open(fname,encoding="latin-1") as f:
+  with open(fname,encoding="utf-8") as f:
     for i, l in enumerate(f):
       pass
 
@@ -83,7 +82,7 @@ def start_multicore(wordlists,hashing_algorithm,output,use_database):
 
   result_lines = []
   for wordlist in wordlists:
-    with open(wordlist,encoding="latin-1") as fwordlist:
+    with open(wordlist,encoding="utf-8") as fwordlist:
 
       for index,line in enumerate(fwordlist):
         result_lines.append(line)
