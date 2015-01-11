@@ -45,6 +45,8 @@ def create_wordlist(file_name, word_limit=8, digit_limit=0):
       Passed to "digit_generator"; default=0.
 
   """
+
+  log = logging.getLogger("leprechaun.generator")
   try:
     with open(file_name, "w") as output:
       for word in _word_generator(word_limit):
@@ -54,4 +56,4 @@ def create_wordlist(file_name, word_limit=8, digit_limit=0):
           word = word + digit
           print(word, file=output)
   except IOError as err:
-    print("File error: " + str(err))
+    log.error("File error: %s",str(err))
