@@ -58,9 +58,9 @@ def main():
   group_hashing.add_argument("-i", "--iterations", type=int, default=1,
     help="Set the number of hash iterations, default=1")
   group_hashing.add_argument("--prefix", type=str, default="",
-    help="Set a prefix for the wordlist")
+    help="Set a prefix for the word")
   group_hashing.add_argument("--postfix", type=str, default="",
-    help="Set a postfix for the wordlist")
+    help="Set a postfix for the word")
   group_hashing.add_argument("--first-run-only", action="store_true",
           default=False,
     help="Add the pre/postfixes only during the first iteration, default=False")
