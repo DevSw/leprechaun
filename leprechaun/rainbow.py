@@ -21,14 +21,23 @@ def _hash_wordlist(wordlist, hashing_algorithm):
     - Hexadecimal digest of the given word.
 
   """
+
   for word in wordlist:
     # Create a copy of the hashing algorithm so the digest doesn't become
     # corrupted.
-    hashing_obj = hashing_algorithm.copy()
-    hashing_obj.update(word.encode())
 
-    return_string = hashing_obj.hexdigest() + ":" + word
+    hash_result = word
+    for i in range(iterations):
+        hashing_obj = hashing_algorithm.copy()
+        hashing_obj.update(hash_result.encode())
+        hash_result = hashing_obj.hexdigest()
+
+    return_string = hash_result + ":" + word
     yield return_string
+
+def set_iterations(num_iterations):
+    global iterations
+    iterations = num_iterations
 
 def write_output(output,input_,use_database):
   """ Write output to the output stream

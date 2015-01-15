@@ -10,7 +10,7 @@ import os
 import sys
 
 from .generator import create_wordlist
-from .rainbow import create_rainbow_table
+from .rainbow import create_rainbow_table, set_iterations
 
 def main():
   """Main function."""
@@ -44,7 +44,7 @@ def main():
   group_output.add_argument("-d", "--use-database", action="store_true",
     help="Rainbow table will be an sqlite database, not a plaintext file")
 
-  group_hashing = parser.add_argument_group("hashing arguments")
+  group_hashing = parser.add_argument_group("hashing algorithms")
   group_hashing.add_argument("-m", "--md5", action="store_true",
     help="Generate MD5 hashes of given passwords (default)")
   group_hashing.add_argument("-s", "--sha1", action="store_true",
@@ -55,6 +55,10 @@ def main():
     help="Generate SHA384 hashes of given passwords")
   group_hashing.add_argument("-s5", "--sha512", action="store_true",
     help="Generate SHA512 hashes of given passwords")
+
+  group_hashing = parser.add_argument_group("hashing arguments")
+  group_hashing.add_argument("-i", "--iterations", type=int, default=1,
+    help="Set the number of hash iterations, default=1")
 
   group_logging = parser.add_argument_group("logging arguments")
   group_logging.add_argument("--debug",action="store_true",help="Print out debug statements")
@@ -68,6 +72,8 @@ def main():
     log.setLevel(logging.DEBUG)
 
   setupLogging()
+
+  set_iterations(args.iterations)
 
   log.info("Leprechaun started, %s",start_time.strftime("%H:%M:%S"))
 
@@ -116,6 +122,8 @@ def main():
   end_time = datetime.now() - start_time
   log.info("Leprechaun finished in: %s.",str(end_time))
   sys.exit(0)
+
+iterator = 1
 
 def setupLogging():
   formatter = logging.Formatter("%(message)s")
