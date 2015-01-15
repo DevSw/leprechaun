@@ -12,13 +12,11 @@ import sys
 from .generator import create_wordlist
 from .rainbow import create_rainbow_table, set_iterations
 
+log = logging.getLogger("leprechaun")
+log.setLevel(logging.INFO)
+
 def main():
   """Main function."""
-
-  global log, debug, start_time
-
-  log = logging.getLogger("leprechaun")
-  log.setLevel(logging.INFO)
 
   start_time = datetime.now()
 
@@ -66,12 +64,10 @@ def main():
   # Parse the command line arguments.
   args = parser.parse_args()
 
-  debug = False
   if args.debug:
-    debug = True
     log.setLevel(logging.DEBUG)
 
-  setupLogging()
+  setupLogging(args.debug)
 
   set_iterations(args.iterations)
 
@@ -123,9 +119,7 @@ def main():
   log.info("Leprechaun finished in: %s.",str(end_time))
   sys.exit(0)
 
-iterator = 1
-
-def setupLogging():
+def setupLogging(debug):
   formatter = logging.Formatter("%(message)s")
   ch = logging.StreamHandler(sys.stdout)
   ch.setFormatter(formatter)

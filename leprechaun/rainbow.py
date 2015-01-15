@@ -3,7 +3,7 @@
 import sqlite3
 
 import logging
-from .db import create_table, save_pair
+from .db import create_table, create_database, save_pair
 from .multicore import cpuCount,start_multicore
 
 log = logging.getLogger("leprechaun.rainbow")
@@ -26,8 +26,12 @@ def _hash_wordlist(wordlist, hashing_algorithm):
     # Create a copy of the hashing algorithm so the digest doesn't become
     # corrupted.
 
-    hash_result = word
+    # Make sure that the newline is not part of the resulting hash
+    hash_result = word.strip('\n')
     for i in range(iterations):
+
+        # Create a copy of the hashing algorithm so the digest
+        # doesn't become corrupted
         hashing_obj = hashing_algorithm.copy()
         hashing_obj.update(hash_result.encode())
         hash_result = hashing_obj.hexdigest()
@@ -112,7 +116,6 @@ def create_rainbow_table(
 
     # Now actually hash the words in the wordlist.
     try:
-    # with open(wordlist, "r", encoding="utf-8") as wl:
       for wordlist in wordlists:
         with open(wordlist, "r", encoding="utf-8") as wl:
           for entry in _hash_wordlist(wl, hashing_algorithm):
