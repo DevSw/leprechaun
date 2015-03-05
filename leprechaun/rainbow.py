@@ -3,7 +3,7 @@
 import sqlite3
 
 import logging
-from .db import create_table, save_pair
+from .db import create_table, create_database, save_pair
 from .multicore import cpuCount,start_multicore
 
 log = logging.getLogger("leprechaun.rainbow")
@@ -21,14 +21,57 @@ def _hash_wordlist(wordlist, hashing_algorithm):
     - Hexadecimal digest of the given word.
 
   """
-  for word in wordlist:
-    # Create a copy of the hashing algorithm so the digest doesn't become
-    # corrupted.
-    hashing_obj = hashing_algorithm.copy()
-    hashing_obj.update(word.encode())
 
-    return_string = hashing_obj.hexdigest() + ":" + word
+  global prefix, postfix
+
+  for word in wordlist:
+
+    # Make sure that the newline is not part of the resulting hash
+    hash_result = word.strip('\n')
+
+    # Create a copy of the hashing algorithm so the digest
+    # doesn't become corrupted
+    hashing_obj = hashing_algorithm.copy()
+
+    # Set prefix, hash and postfix
+    hashing_obj.update(prefix.encode())
+    hashing_obj.update(hash_result.encode())
+    hashing_obj.update(postfix.encode())
+
+    hash_result = hashing_obj.hexdigest()
+
+    # If salts only needs to be added the first iterations, set to None
+    if first_run:
+        prefix = ""
+        postfix = ""
+
+    # Run 1 iteration less, because it has already been done
+    # Use this setup to minimise if statements
+    for i in range(iterations-1):
+
+        # Create a copy of the hashing algorithm so the digest
+        # doesn't become corrupted
+        hashing_obj = hashing_algorithm.copy()
+
+        # Set prefix, hash and postfix
+        hashing_obj.update(prefix.encode())
+        hashing_obj.update(hash_result.encode())
+        hashing_obj.update(postfix.encode())
+
+        hash_result = hashing_obj.hexdigest()
+
+    return_string = hash_result + ":" + word
     yield return_string
+
+def set_iterations(num_iterations):
+    global iterations
+    iterations = num_iterations
+
+def set_hash_fixes(new_prefix, new_postfix, set_first_run):
+    global prefix, postfix, first_run
+    prefix = new_prefix
+    postfix = new_postfix
+    first_run = set_first_run
 
 def write_output(output,input_,use_database):
   """ Write output to the output stream
@@ -103,7 +146,6 @@ def create_rainbow_table(
 
     # Now actually hash the words in the wordlist.
     try:
-    # with open(wordlist, "r", encoding="utf-8") as wl:
       for wordlist in wordlists:
         with open(wordlist, "r", encoding="utf-8") as wl:
           for entry in _hash_wordlist(wl, hashing_algorithm):

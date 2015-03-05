@@ -27,7 +27,7 @@ everything else! ::
 *****
 Usage
 *****
-``leprechaun [-h] [-g] [-l LENGTH] [-d] [-o OUTPUT] [--debug] [-m] [-s] [-s2] [-s3] [-s5] WORDLIST``
+``leprechaun [-h] [-g] [-l LENGTH] [-d] [-o OUTPUT] [--debug] [-m] [-s] [-s2] [-s3] [-s5] [-i] [--prefix] [--postfix] [--first-run-only] WORDLIST``
     
 **arguments:** ::
 
@@ -58,12 +58,18 @@ Usage
     (Logging Arguments)
     --debug                           Print debug log messages
 
-    (Hashing Arguments)
+    (Hashing Algorithms)
     -m, --md5                         Generate MD5 hashes of given passwords (default)
     -s, --sha1                        Generate SHA1 hashes of given passwords    
     -s2, --sha256                     Generate SHA256 hashes of given passwords    
     -s3, --sha384                     Generate SHA384 hashes of given passwords    
     -s5, --sha512                     Generate SHA512 hashes of given passwords
+
+    (Hashing Arguments)
+    -i, --iterations                  Set the number of hash iterations, default=1
+    --prefix                          Set a prefix for the word
+    --postfix                         Set a postfix for the word
+    --first-run-only                  Add the pre/postfixes only during the first iteration, default=False
 
 ********
 Examples
@@ -91,6 +97,10 @@ one's own. ::
   # the plaintext files in a given directory, saving the output in an SQLite
   # database named "patty"
   leprechaun -s2 -d -o patty -f /path/to/your/wordlists
+
+  # Create a rainbow table using the SHA384 hashing algorithm, prepending a
+  # salt to the word and iterate the hash 40 times.
+  leprechaun -s3 -i 40 --prefix '1234' /path/to/your/wordlists
 
 *********
 Wordlists

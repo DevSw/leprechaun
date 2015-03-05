@@ -10,15 +10,13 @@ import os
 import sys
 
 from .generator import create_wordlist
-from .rainbow import create_rainbow_table
+from .rainbow import create_rainbow_table, set_iterations, set_hash_fixes
+
+log = logging.getLogger("leprechaun")
+log.setLevel(logging.INFO)
 
 def main():
   """Main function."""
-
-  global log, debug, start_time
-
-  log = logging.getLogger("leprechaun")
-  log.setLevel(logging.INFO)
 
   start_time = datetime.now()
 
@@ -44,7 +42,7 @@ def main():
   group_output.add_argument("-d", "--use-database", action="store_true",
     help="Rainbow table will be an sqlite database, not a plaintext file")
 
-  group_hashing = parser.add_argument_group("hashing arguments")
+  group_hashing = parser.add_argument_group("hashing algorithms")
   group_hashing.add_argument("-m", "--md5", action="store_true",
     help="Generate MD5 hashes of given passwords (default)")
   group_hashing.add_argument("-s", "--sha1", action="store_true",
@@ -56,18 +54,31 @@ def main():
   group_hashing.add_argument("-s5", "--sha512", action="store_true",
     help="Generate SHA512 hashes of given passwords")
 
+  group_hashing = parser.add_argument_group("hashing arguments")
+  group_hashing.add_argument("-i", "--iterations", type=int, default=1,
+    help="Set the number of hash iterations, default=1")
+  group_hashing.add_argument("--prefix", type=str, default="",
+    help="Set a prefix for the word")
+  group_hashing.add_argument("--postfix", type=str, default="",
+    help="Set a postfix for the word")
+  group_hashing.add_argument("--first-run-only", action="store_true",
+          default=False,
+    help="Add the pre/postfixes only during the first iteration, default=False")
+
   group_logging = parser.add_argument_group("logging arguments")
   group_logging.add_argument("--debug",action="store_true",help="Print out debug statements")
 
   # Parse the command line arguments.
   args = parser.parse_args()
 
-  debug = False
   if args.debug:
-    debug = True
     log.setLevel(logging.DEBUG)
 
-  setupLogging()
+  setupLogging(args.debug)
+
+  set_hash_fixes(args.prefix,args.postfix,args.first_run_only)
+  set_iterations(args.iterations)
+  set_hash_fixes(args.prefix,args.postfix,args.first_run_only)
 
   log.info("Leprechaun started, %s",start_time.strftime("%H:%M:%S"))
 
@@ -117,7 +128,7 @@ def main():
   log.info("Leprechaun finished in: %s.",str(end_time))
   sys.exit(0)
 
-def setupLogging():
+def setupLogging(debug):
   formatter = logging.Formatter("%(message)s")
   ch = logging.StreamHandler(sys.stdout)
   ch.setFormatter(formatter)
